@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FirstAndroidApp"
+rootProject.name = "GatusMobile"
 include(":app")

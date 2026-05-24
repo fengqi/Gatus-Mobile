@@ -1,4 +1,4 @@
-package me.fengqi.firstandroidapp
+package me.fengqi.gatusmobile
 
 import org.junit.Test
 
