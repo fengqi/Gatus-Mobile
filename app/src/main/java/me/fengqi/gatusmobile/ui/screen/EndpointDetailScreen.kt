@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,98 +63,102 @@ fun EndpointDetailScreen(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(GatusBackground)
-            .systemBarsPadding()
-            .verticalScroll(rememberScrollState())
-    ) {
-        Text(
-            text = "<- Back to Dashboard",
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 14.sp,
+    Scaffold(
+        topBar = {
+            Text(
+                text = "< Back to Dashboard",
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .clickable(onClick = onBack)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            )
+        }
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
-                .clickable(onClick = onBack)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        )
+                .fillMaxSize()
+                .background(GatusBackground)
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                if (uiState.loading) {
+                    LoadingIndicator()
+                    return@Column
+                }
 
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            if (uiState.loading) {
-                LoadingIndicator()
-                return@Column
-            }
-
-            if (uiState.error != null) {
-                Text(
-                    text = "Error: ${uiState.error}",
-                    color = GatusUnhealthy,
-                    modifier = Modifier.padding(vertical = 40.dp)
-                )
-                return@Column
-            }
-
-            val detail = uiState.endpoint ?: return@Column
-            val results = detail.results ?: emptyList()
-            val latestResult = results.lastOrNull()
-            val status = healthStatusFromSuccess(latestResult?.success)
-            val hostname = latestResult?.hostname
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
+                if (uiState.error != null) {
                     Text(
-                        text = detail.name,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        text = "Error: ${uiState.error}",
+                        color = GatusUnhealthy,
+                        modifier = Modifier.padding(vertical = 40.dp)
                     )
-                    Row(
-                        modifier = Modifier.padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (detail.group != null) {
-                            Text("Group: ${detail.group}", fontSize = 14.sp, color = GatusTextSecondary)
-                        }
-                        if (detail.group != null && hostname != null) {
-                            Text("|", fontSize = 14.sp, color = GatusTextSecondary)
-                        }
-                        if (hostname != null) {
-                            Text(hostname, fontSize = 14.sp, color = GatusTextSecondary)
+                    return@Column
+                }
+
+                val detail = uiState.endpoint ?: return@Column
+                val results = detail.results ?: emptyList()
+                val latestResult = results.lastOrNull()
+                val status = healthStatusFromSuccess(latestResult?.success)
+                val hostname = latestResult?.hostname
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = detail.name,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Row(
+                            modifier = Modifier.padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (detail.group != null) {
+                                Text("Group: ${detail.group}", fontSize = 14.sp, color = GatusTextSecondary)
+                            }
+                            if (detail.group != null && hostname != null) {
+                                Text("|", fontSize = 14.sp, color = GatusTextSecondary)
+                            }
+                            if (hostname != null) {
+                                Text(hostname, fontSize = 14.sp, color = GatusTextSecondary)
+                            }
                         }
                     }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    StatusBadge(status = status)
                 }
-                Spacer(modifier = Modifier.width(12.dp))
-                StatusBadge(status = status)
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            SummarySection(results = results, latestResult = latestResult)
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            RecentChecksSection(results = results, latestResult = latestResult)
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            if (results.any { it.duration > 0 }) {
-                ResponseTimeTrendSection(results = results)
                 Spacer(modifier = Modifier.height(20.dp))
-            }
 
-            val events = detail.events ?: emptyList()
-            if (events.isNotEmpty()) {
-                EventsSection(events = events)
-            }
+                SummarySection(results = results, latestResult = latestResult)
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+
+                RecentChecksSection(results = results, latestResult = latestResult)
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                if (results.any { it.duration > 0 }) {
+                    ResponseTimeTrendSection(results = results)
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+
+                val events = detail.events ?: emptyList()
+                if (events.isNotEmpty()) {
+                    EventsSection(events = events)
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 }
